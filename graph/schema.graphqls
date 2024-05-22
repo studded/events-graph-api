@@ -1,0 +1,54 @@
+type Event {
+  id: ID!
+  name: String!
+  start_date: String!
+  end_date: String!
+  location: String!
+  description: String!
+  activities: [Activity!]!
+}
+
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  phone: String!
+}
+
+type Activity {
+  id: ID!
+	event_id: Int!
+  name: String!
+  start_time: String!
+  end_time: String!
+	description: String!
+}
+
+type Roles {
+  id: ID!
+	user_id: Int!
+	event_id: Int!
+  name: String!
+  start_time: String!
+  end_time: String!
+	description: String!
+}
+
+input NewUser {
+  name: String!
+	email: String!
+	phone: String!
+}
+
+input NewActivity {
+  eventId: String!
+	name: String!
+	start_time: String!
+	end_time: String!
+	description: String!
+}
+
+type Mutation {
+  createUser(input: NewUser!): User!
+  createActivity(input: NewActivity!): Activity!
+}
