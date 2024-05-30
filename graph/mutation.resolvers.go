@@ -48,20 +48,82 @@ func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent
 	return event, err
 }
 
-// CreateActivity is the resolver for the createActivity field.
-func (r *mutationResolver) CreateActivity(ctx context.Context, input model.NewActivity, currentUserID int) (*model.Activity, error) {
-	role, err := r.RolesRepo.GetRoleByEventIDAndUserID(input.EventID, currentUserID)
+// UpdateEvent is the resolver for the updateEvent field.
+func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, input model.UpdateEvent, currentUserID int) (*model.Event, error) {
+	// Check the current user has an admin role for the event
+	role, err := r.RolesRepo.GetRoleByEventIDAndUserID(id, currentUserID)
+	if err != nil || role.Type != "admin" {
+		return nil, errors.New("only admins may update events")
+	}
+
+	event, err := r.EventsRepo.GetEventByID(id)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if role.Type != "admin" && role.Type != "contributor" {
-		return nil, errors.New("only admin and contributor may create activities")
+	if input.Name != nil {
+		event.Name = *input.Name
+	}
+
+	if input.StartDate != nil {
+		event.StartDate = *input.StartDate
+	}
+
+	if input.EndDate != nil {
+		event.EndDate = *input.EndDate
+	}
+
+	if input.Location != nil {
+		event.Location = *input.Location
+	}
+
+	if input.Description != nil {
+		event.Description = *input.Description
+	}
+
+	return r.EventsRepo.UpdateEvent(event)
+}
+
+// DeleteEvent is the resolver for the deleteEvent field.
+func (r *mutationResolver) DeleteEvent(ctx context.Context, id int, currentUserID int) (bool, error) {
+	// Check the current user has an admin role for the event
+	role, err := r.RolesRepo.GetRoleByEventIDAndUserID(id, currentUserID)
+	if err != nil || role.Type != "admin" {
+		return false, errors.New("only admins may delete events")
+	}
+
+	// Check event exists
+	event, err := r.EventsRepo.GetEventByID(id)
+	if err != nil {
+		return false, err
+	}
+
+	err = r.EventsRepo.DeleteEvent(event)
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// CreateActivity is the resolver for the createActivity field.
+func (r *mutationResolver) CreateActivity(ctx context.Context, input model.NewActivity, currentUserID int) (*model.Activity, error) {
+	// Check the current user has an admin or contributor role for the event
+	role, err := r.RolesRepo.GetRoleByEventIDAndUserID(input.EventID, currentUserID)
+	if err != nil || role.Type != "admin" && role.Type != "contributor" {
+		return nil, errors.New("only admins and contributors may create activities")
+	}
+
+	// Check event exists
+	event, err := r.EventsRepo.GetEventByID(input.EventID)
+	if err != nil {
+		return nil, errors.New("event does not exist")
 	}
 
 	activity := &model.Activity{
-		EventID:     input.EventID,
+		EventID:     event.ID,
 		Name:        input.Name,
 		StartTime:   input.StartTime,
 		EndTime:     input.EndTime,
@@ -71,20 +133,74 @@ func (r *mutationResolver) CreateActivity(ctx context.Context, input model.NewAc
 	return r.ActivitiesRepo.CreateActivity(activity)
 }
 
+// UpdateActivity is the resolver for the updateActivity field.
+func (r *mutationResolver) UpdateActivity(ctx context.Context, id int, input model.UpdateActivity, currentUserID int) (*model.Activity, error) {
+	activity, err := r.ActivitiesRepo.GetActivityByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check the current user has an admin or contributor role for the event
+	role, err := r.RolesRepo.GetRoleByEventIDAndUserID(activity.EventID, currentUserID)
+	if err != nil || role.Type != "admin" && role.Type != "contributor" {
+		return nil, errors.New("only admins and contributors may update activites")
+	}
+
+	if input.Name != nil {
+		activity.Name = *input.Name
+	}
+
+	if input.StartTime != nil {
+		activity.StartTime = *input.StartTime
+	}
+
+	if input.EndTime != nil {
+		activity.EndTime = *input.EndTime
+	}
+
+	if input.Description != nil {
+		activity.Description = *input.Description
+	}
+
+	return r.ActivitiesRepo.UpdateActivity(activity)
+}
+
+// DeleteActivity is the resolver for the deleteActivity field.
+func (r *mutationResolver) DeleteActivity(ctx context.Context, id int, currentUserID int) (bool, error) {
+	activity, err := r.ActivitiesRepo.GetActivityByID(id)
+	if err != nil {
+		return false, err
+	}
+
+	// Check the current user has an admin or contributor role for the event
+	role, err := r.RolesRepo.GetRoleByEventIDAndUserID(activity.EventID, currentUserID)
+	if err != nil || role.Type != "admin" && role.Type != "contributor" {
+		return false, errors.New("only admins and contributors may delete activities")
+	}
+
+	err = r.ActivitiesRepo.DeleteActivity(activity)
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 // CreateRole is the resolver for the createRole field.
 func (r *mutationResolver) CreateRole(ctx context.Context, input model.NewRole, currentUserID int) (*model.Role, error) {
 	// Check the current user has an admin/contributor role for the event
 	role, err := r.RolesRepo.GetRoleByEventIDAndUserID(input.EventID, currentUserID)
 	if err != nil || role.Type == "attendee" {
-		return nil, errors.New("only admin/contributors may create roles")
+		return nil, errors.New("only admins and contributors may create roles")
 	}
 
 	// Contributor can only make attendee roles
 	if role.Type == "contributor" && input.Type != "attendee" {
-		return nil, errors.New("contributors can only create attendee roles")
+		return nil, errors.New("contributors may only create attendee roles")
 	}
 
-	// Else an admin can make any role...
+	// An admin can make any role...
 
 	// Check user exists
 	user, err := r.UsersRepo.GetUserByID(input.UserID)
@@ -105,6 +221,48 @@ func (r *mutationResolver) CreateRole(ctx context.Context, input model.NewRole, 
 	}
 
 	return r.RolesRepo.CreateRole(newRole)
+}
+
+// UpdateRole is the resolver for the updateRole field.
+func (r *mutationResolver) UpdateRole(ctx context.Context, id int, input model.UpdateRole, currentUserID int) (*model.Role, error) {
+	role, err := r.RolesRepo.GetRoleByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check the current user has an admin role for the event
+	roleCheck, err := r.RolesRepo.GetRoleByEventIDAndUserID(role.EventID, currentUserID)
+	if err != nil || roleCheck.Type != "admin" {
+		return nil, errors.New("only admins may update roles")
+	}
+
+	if input.Type != nil {
+		role.Type = *input.Type
+	}
+
+	return r.RolesRepo.UpdateRole(role)
+}
+
+// DeleteRole is the resolver for the deleteRole field.
+func (r *mutationResolver) DeleteRole(ctx context.Context, id int, currentUserID int) (bool, error) {
+	role, err := r.RolesRepo.GetRoleByID(id)
+	if err != nil {
+		return false, err
+	}
+
+	// Check the current user has an admin role for the event
+	roleCheck, err := r.RolesRepo.GetRoleByEventIDAndUserID(role.EventID, currentUserID)
+	if err != nil || roleCheck.Type != "admin" {
+		return false, errors.New("only admins may delete roles")
+	}
+
+	err = r.RolesRepo.DeleteRole(role)
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // Mutation returns MutationResolver implementation.

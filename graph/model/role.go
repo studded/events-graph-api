@@ -1,7 +1,7 @@
 package model
 
 type Role struct {
-	ID      int `goqu:"skipinsert"`
+	ID      int `goqu:"skipinsert,skipupdate"`
 	User    *User
 	UserID  int `db:"user_id"`
 	Event   *Event
@@ -13,4 +13,8 @@ type NewRole struct {
 	UserID  int
 	EventID int
 	Type    string
+}
+
+type UpdateRole struct {
+	Type *string
 }

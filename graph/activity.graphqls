@@ -14,3 +14,10 @@ input NewActivity {
 	endTime: String!
 	description: String!
 }
+
+input UpdateActivity {
+	name: String
+	startTime: String
+	endTime: String
+	description: String
+}

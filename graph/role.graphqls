@@ -10,3 +10,7 @@ input NewRole {
 	eventId: ID!
 	type: String!
 }
+
+input UpdateRole {
+	type: String
+}

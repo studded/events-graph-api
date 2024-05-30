@@ -16,3 +16,11 @@ input NewEvent {
 	location: String!
 	description: String!
 }
+
+input UpdateEvent {
+	name: String
+	startDate: String
+	endDate: String
+	location: String
+	description: String
+}

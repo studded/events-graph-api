@@ -53,3 +53,26 @@ func (e *EventsRepo) CreateEvent(event *model.Event) (*model.Event, error) {
 
 	return event, nil
 }
+
+func (e *EventsRepo) UpdateEvent(event *model.Event) (*model.Event, error) {
+	// UPDATE events SET {col}={val}, ... WHERE id={id} RETURNING *
+	query, _, _ := goqu.Update("events").Set(event).Where(goqu.C("id").Eq(event.ID)).Returning("*").ToSQL()
+	fmt.Println(query)
+
+	err := e.DB.Get(event, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return event, nil
+}
+
+func (e *EventsRepo) DeleteEvent(event *model.Event) error {
+	// DELETE FROM events WHERE id={id}
+	query, _, _ := goqu.Delete("events").Where(goqu.C("id").Eq(event.ID)).ToSQL()
+	fmt.Println(query)
+
+	_, err := e.DB.Exec(query)
+
+	return err
+}
