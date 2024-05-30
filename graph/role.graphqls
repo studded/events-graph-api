@@ -1,0 +1,12 @@
+type Role {
+  id: ID!
+	user: User!
+	event: Event!
+  type: String!
+}
+
+input NewRole {
+	userId: ID!
+	eventId: ID!
+	type: String!
+}

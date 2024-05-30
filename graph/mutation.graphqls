@@ -1,0 +1,6 @@
+type Mutation {
+	createUser(input: NewUser!): User!
+	createEvent(input: NewEvent!, currentUserId: ID!): Event!
+  createActivity(input: NewActivity!, currentUserId: ID!): Activity!
+	createRole(input: NewRole!, currentUserId: ID!): Role!
+}

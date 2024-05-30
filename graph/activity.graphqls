@@ -1,0 +1,16 @@
+type Activity {
+  id: ID!
+	event: Event!
+  name: String!
+  startTime: String!
+  endTime: String!
+	description: String!
+}
+
+input NewActivity {
+  eventId: ID!
+	name: String!
+	startTime: String!
+	endTime: String!
+	description: String!
+}

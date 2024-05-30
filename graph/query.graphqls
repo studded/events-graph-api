@@ -1,0 +1,5 @@
+type Query {
+	events: [Event!]!
+  users: [User!]!
+	user(email: String!): User!
+}

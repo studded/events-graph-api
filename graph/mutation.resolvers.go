@@ -11,21 +11,6 @@ import (
 	"github.com/studded/events-graph-api/graph/model"
 )
 
-// Event is the resolver for the event field.
-func (r *activityResolver) Event(ctx context.Context, obj *model.Activity) (*model.Event, error) {
-	return r.EventsRepo.GetEventByID(obj.EventID)
-}
-
-// Activities is the resolver for the activities field.
-func (r *eventResolver) Activities(ctx context.Context, obj *model.Event) ([]*model.Activity, error) {
-	return r.ActivitiesRepo.GetActivitiesByEventID(obj.ID)
-}
-
-// Roles is the resolver for the roles field.
-func (r *eventResolver) Roles(ctx context.Context, obj *model.Event) ([]*model.Role, error) {
-	return r.RolesRepo.GetRolesByEventID(obj.ID)
-}
-
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
 	user := &model.User{
@@ -122,57 +107,7 @@ func (r *mutationResolver) CreateRole(ctx context.Context, input model.NewRole, 
 	return r.RolesRepo.CreateRole(newRole)
 }
 
-// Events is the resolver for the events field.
-func (r *queryResolver) Events(ctx context.Context) ([]*model.Event, error) {
-	return r.EventsRepo.GetEvents()
-}
-
-// Users is the resolver for the users field.
-func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
-	return r.UsersRepo.GetUsers()
-}
-
-// User is the resolver for the user field.
-func (r *queryResolver) User(ctx context.Context, email string) (*model.User, error) {
-	return r.UsersRepo.GetUserByEmail(email)
-}
-
-// User is the resolver for the user field.
-func (r *roleResolver) User(ctx context.Context, obj *model.Role) (*model.User, error) {
-	return r.UsersRepo.GetUserByID(obj.UserID)
-}
-
-// Event is the resolver for the event field.
-func (r *roleResolver) Event(ctx context.Context, obj *model.Role) (*model.Event, error) {
-	return r.EventsRepo.GetEventByID(obj.EventID)
-}
-
-// Roles is the resolver for the roles field.
-func (r *userResolver) Roles(ctx context.Context, obj *model.User) ([]*model.Role, error) {
-	return r.RolesRepo.GetRolesByUserID(obj.ID)
-}
-
-// Activity returns ActivityResolver implementation.
-func (r *Resolver) Activity() ActivityResolver { return &activityResolver{r} }
-
-// Event returns EventResolver implementation.
-func (r *Resolver) Event() EventResolver { return &eventResolver{r} }
-
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
-// Query returns QueryResolver implementation.
-func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
-
-// Role returns RoleResolver implementation.
-func (r *Resolver) Role() RoleResolver { return &roleResolver{r} }
-
-// User returns UserResolver implementation.
-func (r *Resolver) User() UserResolver { return &userResolver{r} }
-
-type activityResolver struct{ *Resolver }
-type eventResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
-type roleResolver struct{ *Resolver }
-type userResolver struct{ *Resolver }
