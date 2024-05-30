@@ -1,11 +1,12 @@
 type Event {
   id: ID!
   name: String!
-  start_date: String!
-  end_date: String!
+  startDate: String!
+  endDate: String!
   location: String!
   description: String!
   activities: [Activity!]!
+	roles: [Role!]!
 }
 
 type User {
@@ -13,24 +14,36 @@ type User {
   name: String!
   email: String!
   phone: String!
+	roles: [Role!]!
 }
 
 type Activity {
   id: ID!
-	event_id: Int!
+	event: Event!
   name: String!
-  start_time: String!
-  end_time: String!
+  startTime: String!
+  endTime: String!
 	description: String!
 }
 
-type Roles {
+type Role {
   id: ID!
-	user_id: Int!
-	event_id: Int!
-  name: String!
-  start_time: String!
-  end_time: String!
+	user: User!
+	event: Event!
+  type: String!
+}
+
+type Query {
+	events: [Event!]!
+  users: [User!]!
+	user(email: String!): User!
+}
+
+input NewEvent {
+	name: String!
+	startDate: String!
+	endDate: String!
+	location: String!
 	description: String!
 }
 
@@ -41,14 +54,22 @@ input NewUser {
 }
 
 input NewActivity {
-  eventId: String!
+  eventId: ID!
 	name: String!
-	start_time: String!
-	end_time: String!
+	startTime: String!
+	endTime: String!
 	description: String!
 }
 
+input NewRole {
+	userId: ID!
+	eventId: ID!
+	type: String!
+}
+
 type Mutation {
-  createUser(input: NewUser!): User!
-  createActivity(input: NewActivity!): Activity!
+	createUser(input: NewUser!): User!
+	createEvent(input: NewEvent!, currentUserId: ID!): Event!
+  createActivity(input: NewActivity!, currentUserId: ID!): Activity!
+	createRole(input: NewRole!, currentUserId: ID!): Role!
 }

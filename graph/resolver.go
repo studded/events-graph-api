@@ -1,7 +1,14 @@
 package graph
 
-// This file will not be regenerated automatically.
-//
-// It serves as dependency injection for your app, add any dependencies you require here.
+//go:generate go run github.com/99designs/gqlgen generate
 
-type Resolver struct{}
+import (
+	"github.com/studded/events-graph-api/postgres"
+)
+
+type Resolver struct {
+	ActivitiesRepo postgres.ActivitiesRepo
+	EventsRepo     postgres.EventsRepo
+	RolesRepo      postgres.RolesRepo
+	UsersRepo      postgres.UsersRepo
+}

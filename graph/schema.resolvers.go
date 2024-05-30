@@ -6,22 +6,173 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/studded/events-graph-api/graph/model"
 )
 
+// Event is the resolver for the event field.
+func (r *activityResolver) Event(ctx context.Context, obj *model.Activity) (*model.Event, error) {
+	return r.EventsRepo.GetEventByID(obj.EventID)
+}
+
+// Activities is the resolver for the activities field.
+func (r *eventResolver) Activities(ctx context.Context, obj *model.Event) ([]*model.Activity, error) {
+	return r.ActivitiesRepo.GetActivitiesByEventID(obj.ID)
+}
+
+// Roles is the resolver for the roles field.
+func (r *eventResolver) Roles(ctx context.Context, obj *model.Event) ([]*model.Role, error) {
+	return r.RolesRepo.GetRolesByEventID(obj.ID)
+}
+
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: CreateUser - createUser"))
+	user := &model.User{
+		Name:  input.Name,
+		Email: input.Email,
+		Phone: input.Phone,
+	}
+
+	return r.UsersRepo.CreateUser(user)
+}
+
+// CreateEvent is the resolver for the createEvent field.
+func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent, currentUserID int) (*model.Event, error) {
+	event := &model.Event{
+		Name:        input.Name,
+		StartDate:   input.StartDate,
+		EndDate:     input.EndDate,
+		Location:    input.Location,
+		Description: input.Description,
+	}
+	event, err := r.EventsRepo.CreateEvent(event)
+
+	if err != nil {
+		return event, err
+	}
+
+	// create a default admin role for the current user
+	admin := &model.Role{
+		EventID: event.ID,
+		UserID:  currentUserID,
+		Type:    "admin",
+	}
+	admin, err = r.RolesRepo.CreateRole(admin)
+
+	return event, err
 }
 
 // CreateActivity is the resolver for the createActivity field.
-func (r *mutationResolver) CreateActivity(ctx context.Context, input model.NewActivity) (*model.Activity, error) {
-	panic(fmt.Errorf("not implemented: CreateActivity - createActivity"))
+func (r *mutationResolver) CreateActivity(ctx context.Context, input model.NewActivity, currentUserID int) (*model.Activity, error) {
+	role, err := r.RolesRepo.GetRoleByEventIDAndUserID(input.EventID, currentUserID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if role.Type != "admin" && role.Type != "contributor" {
+		return nil, errors.New("only admin and contributor may create activities")
+	}
+
+	activity := &model.Activity{
+		EventID:     input.EventID,
+		Name:        input.Name,
+		StartTime:   input.StartTime,
+		EndTime:     input.EndTime,
+		Description: input.Description,
+	}
+
+	return r.ActivitiesRepo.CreateActivity(activity)
 }
+
+// CreateRole is the resolver for the createRole field.
+func (r *mutationResolver) CreateRole(ctx context.Context, input model.NewRole, currentUserID int) (*model.Role, error) {
+	// Check the current user has an admin/contributor role for the event
+	role, err := r.RolesRepo.GetRoleByEventIDAndUserID(input.EventID, currentUserID)
+	if err != nil || role.Type == "attendee" {
+		return nil, errors.New("only admin/contributors may create roles")
+	}
+
+	// Contributor can only make attendee roles
+	if role.Type == "contributor" && input.Type != "attendee" {
+		return nil, errors.New("contributors can only create attendee roles")
+	}
+
+	// Else an admin can make any role...
+
+	// Check user exists
+	user, err := r.UsersRepo.GetUserByID(input.UserID)
+	if err != nil {
+		return nil, errors.New("user does not exist")
+	}
+
+	// Check event exists
+	event, err := r.EventsRepo.GetEventByID(input.EventID)
+	if err != nil {
+		return nil, errors.New("event does not exist")
+	}
+
+	newRole := &model.Role{
+		UserID:  user.ID,
+		EventID: event.ID,
+		Type:    input.Type,
+	}
+
+	return r.RolesRepo.CreateRole(newRole)
+}
+
+// Events is the resolver for the events field.
+func (r *queryResolver) Events(ctx context.Context) ([]*model.Event, error) {
+	return r.EventsRepo.GetEvents()
+}
+
+// Users is the resolver for the users field.
+func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
+	return r.UsersRepo.GetUsers()
+}
+
+// User is the resolver for the user field.
+func (r *queryResolver) User(ctx context.Context, email string) (*model.User, error) {
+	return r.UsersRepo.GetUserByEmail(email)
+}
+
+// User is the resolver for the user field.
+func (r *roleResolver) User(ctx context.Context, obj *model.Role) (*model.User, error) {
+	return r.UsersRepo.GetUserByID(obj.UserID)
+}
+
+// Event is the resolver for the event field.
+func (r *roleResolver) Event(ctx context.Context, obj *model.Role) (*model.Event, error) {
+	return r.EventsRepo.GetEventByID(obj.EventID)
+}
+
+// Roles is the resolver for the roles field.
+func (r *userResolver) Roles(ctx context.Context, obj *model.User) ([]*model.Role, error) {
+	return r.RolesRepo.GetRolesByUserID(obj.ID)
+}
+
+// Activity returns ActivityResolver implementation.
+func (r *Resolver) Activity() ActivityResolver { return &activityResolver{r} }
+
+// Event returns EventResolver implementation.
+func (r *Resolver) Event() EventResolver { return &eventResolver{r} }
 
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
+// Query returns QueryResolver implementation.
+func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+
+// Role returns RoleResolver implementation.
+func (r *Resolver) Role() RoleResolver { return &roleResolver{r} }
+
+// User returns UserResolver implementation.
+func (r *Resolver) User() UserResolver { return &userResolver{r} }
+
+type activityResolver struct{ *Resolver }
+type eventResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
+type roleResolver struct{ *Resolver }
+type userResolver struct{ *Resolver }
