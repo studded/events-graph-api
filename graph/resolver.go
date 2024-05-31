@@ -9,6 +9,7 @@ import (
 type Resolver struct {
 	ActivitiesRepo postgres.ActivitiesRepo
 	EventsRepo     postgres.EventsRepo
+	ExpensesRepo   postgres.ExpensesRepo
 	RolesRepo      postgres.RolesRepo
 	UsersRepo      postgres.UsersRepo
 }

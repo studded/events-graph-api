@@ -41,6 +41,7 @@ type Config struct {
 type ResolverRoot interface {
 	Activity() ActivityResolver
 	Event() EventResolver
+	Expense() ExpenseResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 	Role() RoleResolver
@@ -64,6 +65,7 @@ type ComplexityRoot struct {
 		Activities  func(childComplexity int) int
 		Description func(childComplexity int) int
 		EndDate     func(childComplexity int) int
+		Expenses    func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Location    func(childComplexity int) int
 		Name        func(childComplexity int) int
@@ -71,16 +73,28 @@ type ComplexityRoot struct {
 		StartDate   func(childComplexity int) int
 	}
 
+	Expense struct {
+		Category    func(childComplexity int) int
+		Cost        func(childComplexity int) int
+		Description func(childComplexity int) int
+		Event       func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Name        func(childComplexity int) int
+	}
+
 	Mutation struct {
 		CreateActivity func(childComplexity int, input model.NewActivity, currentUserID int) int
 		CreateEvent    func(childComplexity int, input model.NewEvent, currentUserID int) int
+		CreateExpense  func(childComplexity int, input model.NewExpense, currentUserID int) int
 		CreateRole     func(childComplexity int, input model.NewRole, currentUserID int) int
 		CreateUser     func(childComplexity int, input model.NewUser) int
 		DeleteActivity func(childComplexity int, id int, currentUserID int) int
 		DeleteEvent    func(childComplexity int, id int, currentUserID int) int
+		DeleteExpense  func(childComplexity int, id int, currentUserID int) int
 		DeleteRole     func(childComplexity int, id int, currentUserID int) int
 		UpdateActivity func(childComplexity int, id int, input model.UpdateActivity, currentUserID int) int
 		UpdateEvent    func(childComplexity int, id int, input model.UpdateEvent, currentUserID int) int
+		UpdateExpense  func(childComplexity int, id int, input model.UpdateExpense, currentUserID int) int
 		UpdateRole     func(childComplexity int, id int, input model.UpdateRole, currentUserID int) int
 	}
 
@@ -112,6 +126,10 @@ type ActivityResolver interface {
 type EventResolver interface {
 	Activities(ctx context.Context, obj *model.Event) ([]*model.Activity, error)
 	Roles(ctx context.Context, obj *model.Event) ([]*model.Role, error)
+	Expenses(ctx context.Context, obj *model.Event) ([]*model.Expense, error)
+}
+type ExpenseResolver interface {
+	Event(ctx context.Context, obj *model.Expense) (*model.Event, error)
 }
 type MutationResolver interface {
 	CreateUser(ctx context.Context, input model.NewUser) (*model.User, error)
@@ -124,6 +142,9 @@ type MutationResolver interface {
 	CreateRole(ctx context.Context, input model.NewRole, currentUserID int) (*model.Role, error)
 	UpdateRole(ctx context.Context, id int, input model.UpdateRole, currentUserID int) (*model.Role, error)
 	DeleteRole(ctx context.Context, id int, currentUserID int) (bool, error)
+	CreateExpense(ctx context.Context, input model.NewExpense, currentUserID int) (*model.Expense, error)
+	UpdateExpense(ctx context.Context, id int, input model.UpdateExpense, currentUserID int) (*model.Expense, error)
+	DeleteExpense(ctx context.Context, id int, currentUserID int) (bool, error)
 }
 type QueryResolver interface {
 	Events(ctx context.Context) ([]*model.Event, error)
@@ -220,6 +241,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Event.EndDate(childComplexity), true
 
+	case "Event.expenses":
+		if e.complexity.Event.Expenses == nil {
+			break
+		}
+
+		return e.complexity.Event.Expenses(childComplexity), true
+
 	case "Event.id":
 		if e.complexity.Event.ID == nil {
 			break
@@ -255,6 +283,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Event.StartDate(childComplexity), true
 
+	case "Expense.category":
+		if e.complexity.Expense.Category == nil {
+			break
+		}
+
+		return e.complexity.Expense.Category(childComplexity), true
+
+	case "Expense.cost":
+		if e.complexity.Expense.Cost == nil {
+			break
+		}
+
+		return e.complexity.Expense.Cost(childComplexity), true
+
+	case "Expense.description":
+		if e.complexity.Expense.Description == nil {
+			break
+		}
+
+		return e.complexity.Expense.Description(childComplexity), true
+
+	case "Expense.event":
+		if e.complexity.Expense.Event == nil {
+			break
+		}
+
+		return e.complexity.Expense.Event(childComplexity), true
+
+	case "Expense.id":
+		if e.complexity.Expense.ID == nil {
+			break
+		}
+
+		return e.complexity.Expense.ID(childComplexity), true
+
+	case "Expense.name":
+		if e.complexity.Expense.Name == nil {
+			break
+		}
+
+		return e.complexity.Expense.Name(childComplexity), true
+
 	case "Mutation.createActivity":
 		if e.complexity.Mutation.CreateActivity == nil {
 			break
@@ -278,6 +348,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateEvent(childComplexity, args["input"].(model.NewEvent), args["currentUserId"].(int)), true
+
+	case "Mutation.createExpense":
+		if e.complexity.Mutation.CreateExpense == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createExpense_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateExpense(childComplexity, args["input"].(model.NewExpense), args["currentUserId"].(int)), true
 
 	case "Mutation.createRole":
 		if e.complexity.Mutation.CreateRole == nil {
@@ -327,6 +409,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.DeleteEvent(childComplexity, args["id"].(int), args["currentUserId"].(int)), true
 
+	case "Mutation.deleteExpense":
+		if e.complexity.Mutation.DeleteExpense == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteExpense_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteExpense(childComplexity, args["id"].(int), args["currentUserId"].(int)), true
+
 	case "Mutation.deleteRole":
 		if e.complexity.Mutation.DeleteRole == nil {
 			break
@@ -362,6 +456,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateEvent(childComplexity, args["id"].(int), args["input"].(model.UpdateEvent), args["currentUserId"].(int)), true
+
+	case "Mutation.updateExpense":
+		if e.complexity.Mutation.UpdateExpense == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateExpense_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateExpense(childComplexity, args["id"].(int), args["input"].(model.UpdateExpense), args["currentUserId"].(int)), true
 
 	case "Mutation.updateRole":
 		if e.complexity.Mutation.UpdateRole == nil {
@@ -474,10 +580,12 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputNewActivity,
 		ec.unmarshalInputNewEvent,
+		ec.unmarshalInputNewExpense,
 		ec.unmarshalInputNewRole,
 		ec.unmarshalInputNewUser,
 		ec.unmarshalInputUpdateActivity,
 		ec.unmarshalInputUpdateEvent,
+		ec.unmarshalInputUpdateExpense,
 		ec.unmarshalInputUpdateRole,
 	)
 	first := true
@@ -575,7 +683,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
-//go:embed "activity.graphqls" "event.graphqls" "mutation.graphqls" "query.graphqls" "role.graphqls" "user.graphqls"
+//go:embed "activity.graphqls" "event.graphqls" "expense.graphqls" "mutation.graphqls" "query.graphqls" "role.graphqls" "user.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -589,6 +697,7 @@ func sourceData(filename string) string {
 var sources = []*ast.Source{
 	{Name: "activity.graphqls", Input: sourceData("activity.graphqls"), BuiltIn: false},
 	{Name: "event.graphqls", Input: sourceData("event.graphqls"), BuiltIn: false},
+	{Name: "expense.graphqls", Input: sourceData("expense.graphqls"), BuiltIn: false},
 	{Name: "mutation.graphqls", Input: sourceData("mutation.graphqls"), BuiltIn: false},
 	{Name: "query.graphqls", Input: sourceData("query.graphqls"), BuiltIn: false},
 	{Name: "role.graphqls", Input: sourceData("role.graphqls"), BuiltIn: false},
@@ -631,6 +740,30 @@ func (ec *executionContext) field_Mutation_createEvent_args(ctx context.Context,
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNNewEvent2githubᚗcomᚋstuddedᚋeventsᚑgraphᚑapiᚋgraphᚋmodelᚐNewEvent(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["currentUserId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currentUserId"))
+		arg1, err = ec.unmarshalNID2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["currentUserId"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createExpense_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.NewExpense
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNNewExpense2githubᚗcomᚋstuddedᚋeventsᚑgraphᚑapiᚋgraphᚋmodelᚐNewExpense(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -735,6 +868,30 @@ func (ec *executionContext) field_Mutation_deleteEvent_args(ctx context.Context,
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteExpense_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["currentUserId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currentUserId"))
+		arg1, err = ec.unmarshalNID2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["currentUserId"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteRole_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -808,6 +965,39 @@ func (ec *executionContext) field_Mutation_updateEvent_args(ctx context.Context,
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg1, err = ec.unmarshalNUpdateEvent2githubᚗcomᚋstuddedᚋeventsᚑgraphᚑapiᚋgraphᚋmodelᚐUpdateEvent(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["currentUserId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currentUserId"))
+		arg2, err = ec.unmarshalNID2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["currentUserId"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateExpense_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 model.UpdateExpense
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg1, err = ec.unmarshalNUpdateExpense2githubᚗcomᚋstuddedᚋeventsᚑgraphᚑapiᚋgraphᚋmodelᚐUpdateExpense(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1025,6 +1215,8 @@ func (ec *executionContext) fieldContext_Activity_event(_ context.Context, field
 				return ec.fieldContext_Event_activities(ctx, field)
 			case "roles":
 				return ec.fieldContext_Event_roles(ctx, field)
+			case "expenses":
+				return ec.fieldContext_Event_expenses(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
@@ -1584,6 +1776,348 @@ func (ec *executionContext) fieldContext_Event_roles(_ context.Context, field gr
 	return fc, nil
 }
 
+func (ec *executionContext) _Event_expenses(ctx context.Context, field graphql.CollectedField, obj *model.Event) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Event_expenses(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Event().Expenses(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Expense)
+	fc.Result = res
+	return ec.marshalNExpense2ᚕᚖgithubᚗcomᚋstuddedᚋeventsᚑgraphᚑapiᚋgraphᚋmodelᚐExpenseᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Event_expenses(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Event",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Expense_id(ctx, field)
+			case "event":
+				return ec.fieldContext_Expense_event(ctx, field)
+			case "name":
+				return ec.fieldContext_Expense_name(ctx, field)
+			case "cost":
+				return ec.fieldContext_Expense_cost(ctx, field)
+			case "description":
+				return ec.fieldContext_Expense_description(ctx, field)
+			case "category":
+				return ec.fieldContext_Expense_category(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Expense", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Expense_id(ctx context.Context, field graphql.CollectedField, obj *model.Expense) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Expense_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNID2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Expense_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Expense",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Expense_event(ctx context.Context, field graphql.CollectedField, obj *model.Expense) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Expense_event(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Expense().Event(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Event)
+	fc.Result = res
+	return ec.marshalNEvent2ᚖgithubᚗcomᚋstuddedᚋeventsᚑgraphᚑapiᚋgraphᚋmodelᚐEvent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Expense_event(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Expense",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Event_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Event_name(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Event_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Event_endDate(ctx, field)
+			case "location":
+				return ec.fieldContext_Event_location(ctx, field)
+			case "description":
+				return ec.fieldContext_Event_description(ctx, field)
+			case "activities":
+				return ec.fieldContext_Event_activities(ctx, field)
+			case "roles":
+				return ec.fieldContext_Event_roles(ctx, field)
+			case "expenses":
+				return ec.fieldContext_Event_expenses(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Expense_name(ctx context.Context, field graphql.CollectedField, obj *model.Expense) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Expense_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Expense_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Expense",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Expense_cost(ctx context.Context, field graphql.CollectedField, obj *model.Expense) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Expense_cost(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cost, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Expense_cost(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Expense",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Expense_description(ctx context.Context, field graphql.CollectedField, obj *model.Expense) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Expense_description(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Expense_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Expense",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Expense_category(ctx context.Context, field graphql.CollectedField, obj *model.Expense) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Expense_category(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Category, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Expense_category(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Expense",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_createUser(ctx, field)
 	if err != nil {
@@ -1706,6 +2240,8 @@ func (ec *executionContext) fieldContext_Mutation_createEvent(ctx context.Contex
 				return ec.fieldContext_Event_activities(ctx, field)
 			case "roles":
 				return ec.fieldContext_Event_roles(ctx, field)
+			case "expenses":
+				return ec.fieldContext_Event_expenses(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
@@ -1779,6 +2315,8 @@ func (ec *executionContext) fieldContext_Mutation_updateEvent(ctx context.Contex
 				return ec.fieldContext_Event_activities(ctx, field)
 			case "roles":
 				return ec.fieldContext_Event_roles(ctx, field)
+			case "expenses":
+				return ec.fieldContext_Event_expenses(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
@@ -2230,6 +2768,199 @@ func (ec *executionContext) fieldContext_Mutation_deleteRole(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createExpense(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createExpense(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateExpense(rctx, fc.Args["input"].(model.NewExpense), fc.Args["currentUserId"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Expense)
+	fc.Result = res
+	return ec.marshalNExpense2ᚖgithubᚗcomᚋstuddedᚋeventsᚑgraphᚑapiᚋgraphᚋmodelᚐExpense(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createExpense(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Expense_id(ctx, field)
+			case "event":
+				return ec.fieldContext_Expense_event(ctx, field)
+			case "name":
+				return ec.fieldContext_Expense_name(ctx, field)
+			case "cost":
+				return ec.fieldContext_Expense_cost(ctx, field)
+			case "description":
+				return ec.fieldContext_Expense_description(ctx, field)
+			case "category":
+				return ec.fieldContext_Expense_category(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Expense", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createExpense_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateExpense(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateExpense(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateExpense(rctx, fc.Args["id"].(int), fc.Args["input"].(model.UpdateExpense), fc.Args["currentUserId"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Expense)
+	fc.Result = res
+	return ec.marshalNExpense2ᚖgithubᚗcomᚋstuddedᚋeventsᚑgraphᚑapiᚋgraphᚋmodelᚐExpense(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateExpense(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Expense_id(ctx, field)
+			case "event":
+				return ec.fieldContext_Expense_event(ctx, field)
+			case "name":
+				return ec.fieldContext_Expense_name(ctx, field)
+			case "cost":
+				return ec.fieldContext_Expense_cost(ctx, field)
+			case "description":
+				return ec.fieldContext_Expense_description(ctx, field)
+			case "category":
+				return ec.fieldContext_Expense_category(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Expense", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateExpense_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteExpense(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteExpense(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteExpense(rctx, fc.Args["id"].(int), fc.Args["currentUserId"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteExpense(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteExpense_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_events(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_events(ctx, field)
 	if err != nil {
@@ -2285,6 +3016,8 @@ func (ec *executionContext) fieldContext_Query_events(_ context.Context, field g
 				return ec.fieldContext_Event_activities(ctx, field)
 			case "roles":
 				return ec.fieldContext_Event_roles(ctx, field)
+			case "expenses":
+				return ec.fieldContext_Event_expenses(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
@@ -2699,6 +3432,8 @@ func (ec *executionContext) fieldContext_Role_event(_ context.Context, field gra
 				return ec.fieldContext_Event_activities(ctx, field)
 			case "roles":
 				return ec.fieldContext_Event_roles(ctx, field)
+			case "expenses":
+				return ec.fieldContext_Event_expenses(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
@@ -4863,6 +5598,61 @@ func (ec *executionContext) unmarshalInputNewEvent(ctx context.Context, obj inte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputNewExpense(ctx context.Context, obj interface{}) (model.NewExpense, error) {
+	var it model.NewExpense
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"eventId", "name", "cost", "description", "category"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "eventId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("eventId"))
+			data, err := ec.unmarshalNID2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EventID = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "cost":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cost"))
+			data, err := ec.unmarshalNFloat2float64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Cost = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "category":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Category = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNewRole(ctx context.Context, obj interface{}) (model.NewRole, error) {
 	var it model.NewRole
 	asMap := map[string]interface{}{}
@@ -5042,6 +5832,54 @@ func (ec *executionContext) unmarshalInputUpdateEvent(ctx context.Context, obj i
 				return it, err
 			}
 			it.Description = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateExpense(ctx context.Context, obj interface{}) (model.UpdateExpense, error) {
+	var it model.UpdateExpense
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "cost", "description", "category"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "cost":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cost"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Cost = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "category":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Category = data
 		}
 	}
 
@@ -5291,6 +6129,137 @@ func (ec *executionContext) _Event(ctx context.Context, sel ast.SelectionSet, ob
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "expenses":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Event_expenses(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var expenseImplementors = []string{"Expense"}
+
+func (ec *executionContext) _Expense(ctx context.Context, sel ast.SelectionSet, obj *model.Expense) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, expenseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Expense")
+		case "id":
+			out.Values[i] = ec._Expense_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "event":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Expense_event(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "name":
+			out.Values[i] = ec._Expense_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "cost":
+			out.Values[i] = ec._Expense_cost(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "description":
+			out.Values[i] = ec._Expense_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "category":
+			out.Values[i] = ec._Expense_category(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5399,6 +6368,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteRole":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteRole(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createExpense":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createExpense(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateExpense":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateExpense(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteExpense":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteExpense(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -6205,6 +7195,79 @@ func (ec *executionContext) marshalNEvent2ᚖgithubᚗcomᚋstuddedᚋeventsᚑg
 	return ec._Event(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNExpense2githubᚗcomᚋstuddedᚋeventsᚑgraphᚑapiᚋgraphᚋmodelᚐExpense(ctx context.Context, sel ast.SelectionSet, v model.Expense) graphql.Marshaler {
+	return ec._Expense(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNExpense2ᚕᚖgithubᚗcomᚋstuddedᚋeventsᚑgraphᚑapiᚋgraphᚋmodelᚐExpenseᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Expense) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNExpense2ᚖgithubᚗcomᚋstuddedᚋeventsᚑgraphᚑapiᚋgraphᚋmodelᚐExpense(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNExpense2ᚖgithubᚗcomᚋstuddedᚋeventsᚑgraphᚑapiᚋgraphᚋmodelᚐExpense(ctx context.Context, sel ast.SelectionSet, v *model.Expense) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Expense(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
+	res := graphql.MarshalFloatContext(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return graphql.WrapContextMarshaler(ctx, res)
+}
+
 func (ec *executionContext) unmarshalNID2int(ctx context.Context, v interface{}) (int, error) {
 	res, err := graphql.UnmarshalIntID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -6227,6 +7290,11 @@ func (ec *executionContext) unmarshalNNewActivity2githubᚗcomᚋstuddedᚋevent
 
 func (ec *executionContext) unmarshalNNewEvent2githubᚗcomᚋstuddedᚋeventsᚑgraphᚑapiᚋgraphᚋmodelᚐNewEvent(ctx context.Context, v interface{}) (model.NewEvent, error) {
 	res, err := ec.unmarshalInputNewEvent(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNNewExpense2githubᚗcomᚋstuddedᚋeventsᚑgraphᚑapiᚋgraphᚋmodelᚐNewExpense(ctx context.Context, v interface{}) (model.NewExpense, error) {
+	res, err := ec.unmarshalInputNewExpense(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -6320,6 +7388,11 @@ func (ec *executionContext) unmarshalNUpdateActivity2githubᚗcomᚋstuddedᚋev
 
 func (ec *executionContext) unmarshalNUpdateEvent2githubᚗcomᚋstuddedᚋeventsᚑgraphᚑapiᚋgraphᚋmodelᚐUpdateEvent(ctx context.Context, v interface{}) (model.UpdateEvent, error) {
 	res, err := ec.unmarshalInputUpdateEvent(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateExpense2githubᚗcomᚋstuddedᚋeventsᚑgraphᚑapiᚋgraphᚋmodelᚐUpdateExpense(ctx context.Context, v interface{}) (model.UpdateExpense, error) {
+	res, err := ec.unmarshalInputUpdateExpense(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -6663,6 +7736,22 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOFloat2ᚖfloat64(ctx context.Context, v interface{}) (*float64, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOFloat2ᚖfloat64(ctx context.Context, sel ast.SelectionSet, v *float64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalFloatContext(*v)
+	return graphql.WrapContextMarshaler(ctx, res)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

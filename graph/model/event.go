@@ -10,10 +10,10 @@ type Event struct {
 }
 
 type NewEvent struct {
-	UserID      int `db:"user_id"`
+	UserID      int
 	Name        string
-	StartDate   string `db:"start_date"`
-	EndDate     string `db:"end_date"`
+	StartDate   string
+	EndDate     string
 	Location    string
 	Description string
 }

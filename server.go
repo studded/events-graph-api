@@ -32,6 +32,7 @@ func main() {
 	config := graph.Config{Resolvers: &graph.Resolver{
 		ActivitiesRepo: postgres.ActivitiesRepo{DB: db},
 		EventsRepo:     postgres.EventsRepo{DB: db},
+		ExpensesRepo:   postgres.ExpensesRepo{DB: db},
 		RolesRepo:      postgres.RolesRepo{DB: db},
 		UsersRepo:      postgres.UsersRepo{DB: db},
 	}}

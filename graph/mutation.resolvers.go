@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/studded/events-graph-api/graph/model"
 )
@@ -104,6 +105,8 @@ func (r *mutationResolver) DeleteEvent(ctx context.Context, id int, currentUserI
 	if err != nil {
 		return false, err
 	}
+
+	// TODO: delete orphaned activities, roles, expenses
 
 	return true, nil
 }
@@ -263,6 +266,21 @@ func (r *mutationResolver) DeleteRole(ctx context.Context, id int, currentUserID
 	}
 
 	return true, nil
+}
+
+// CreateExpense is the resolver for the createExpense field.
+func (r *mutationResolver) CreateExpense(ctx context.Context, input model.NewExpense, currentUserID int) (*model.Expense, error) {
+	panic(fmt.Errorf("not implemented: CreateExpense - createExpense"))
+}
+
+// UpdateExpense is the resolver for the updateExpense field.
+func (r *mutationResolver) UpdateExpense(ctx context.Context, id int, input model.UpdateExpense, currentUserID int) (*model.Expense, error) {
+	panic(fmt.Errorf("not implemented: UpdateExpense - updateExpense"))
+}
+
+// DeleteExpense is the resolver for the deleteExpense field.
+func (r *mutationResolver) DeleteExpense(ctx context.Context, id int, currentUserID int) (bool, error) {
+	panic(fmt.Errorf("not implemented: DeleteExpense - deleteExpense"))
 }
 
 // Mutation returns MutationResolver implementation.

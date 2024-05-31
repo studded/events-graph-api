@@ -20,6 +20,11 @@ func (r *eventResolver) Roles(ctx context.Context, obj *model.Event) ([]*model.R
 	return r.RolesRepo.GetRolesByEventID(obj.ID)
 }
 
+// Expenses is the resolver for the expenses field.
+func (r *eventResolver) Expenses(ctx context.Context, obj *model.Event) ([]*model.Expense, error) {
+	return r.ExpensesRepo.GetExpensesByEventID(obj.ID)
+}
+
 // Event returns EventResolver implementation.
 func (r *Resolver) Event() EventResolver { return &eventResolver{r} }
 

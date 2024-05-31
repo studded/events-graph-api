@@ -9,4 +9,7 @@ type Mutation {
 	createRole(input: NewRole!, currentUserId: ID!): Role!
 	updateRole(id: ID!, input: UpdateRole!, currentUserId: ID!): Role!
 	deleteRole(id: ID!, currentUserId: ID!): Boolean!
+	createExpense(input: NewExpense!, currentUserId: ID!): Expense!
+	updateExpense(id: ID!, input: UpdateExpense!, currentUserId: ID!): Expense!
+	deleteExpense(id: ID!, currentUserId: ID!): Boolean!
 }

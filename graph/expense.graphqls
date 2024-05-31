@@ -1,0 +1,23 @@
+type Expense {
+  id: ID!
+	event: Event!
+  name: String!
+	cost: Float!
+	description: String!
+	category: String!
+}
+
+input NewExpense {
+  eventId: ID!
+	name: String!
+	cost: Float!
+	description: String!
+	category: String!
+}
+
+input UpdateExpense {
+	name: String
+	cost: Float
+	description: String
+	category: String
+}
