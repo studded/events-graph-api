@@ -1,6 +1,6 @@
-# TODO:
-- Use Dataloader to fix N+1 queries
-- Add more pagination - currently on Events and Users list
+# Future Considerations:
+- Use Dataloader to fix potential N+1 queries
+- Add more pagination as needed
 - Validate date/times (end should be after start, etc.)
 - Last admin role for an event should not be deleted
 
