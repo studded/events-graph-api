@@ -8,10 +8,14 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
+
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 
 	"github.com/studded/events-graph-api/graph"
+	customMiddleware "github.com/studded/events-graph-api/middleware"
 	"github.com/studded/events-graph-api/postgres"
 )
 
@@ -29,19 +33,25 @@ func main() {
 		port = defaultPort
 	}
 
+	userRepo := postgres.UsersRepo{DB: db}
+
+	router := chi.NewRouter()
+	router.Use(middleware.Logger)
+	router.Use(customMiddleware.AssignCurrentUser(userRepo))
+
 	config := graph.Config{Resolvers: &graph.Resolver{
 		ActivitiesRepo: postgres.ActivitiesRepo{DB: db},
 		EventsRepo:     postgres.EventsRepo{DB: db},
 		ExpensesRepo:   postgres.ExpensesRepo{DB: db},
 		RolesRepo:      postgres.RolesRepo{DB: db},
-		UsersRepo:      postgres.UsersRepo{DB: db},
+		UsersRepo:      userRepo,
 	}}
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(config))
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	router.Handle("/query", srv)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }

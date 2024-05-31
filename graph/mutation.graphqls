@@ -1,15 +1,15 @@
 type Mutation {
 	createUser(input: NewUser!): User!
-	createEvent(input: NewEvent!, currentUserId: ID!): Event!
-	updateEvent(id: ID!, input: UpdateEvent!, currentUserId: ID!): Event!
-	deleteEvent(id: ID!, currentUserId: ID!): Boolean!
-  createActivity(input: NewActivity!, currentUserId: ID!): Activity!
-	updateActivity(id: ID!, input: UpdateActivity!, currentUserId: ID!): Activity!
-	deleteActivity(id: ID!, currentUserId: ID!): Boolean!
-	createRole(input: NewRole!, currentUserId: ID!): Role!
-	updateRole(id: ID!, input: UpdateRole!, currentUserId: ID!): Role!
-	deleteRole(id: ID!, currentUserId: ID!): Boolean!
-	createExpense(input: NewExpense!, currentUserId: ID!): Expense!
-	updateExpense(id: ID!, input: UpdateExpense!, currentUserId: ID!): Expense!
-	deleteExpense(id: ID!, currentUserId: ID!): Boolean!
+	createEvent(input: NewEvent!): Event!
+	updateEvent(id: ID!, input: UpdateEvent!): Event!
+	deleteEvent(id: ID!): Boolean!
+  createActivity(input: NewActivity!): Activity!
+	updateActivity(id: ID!, input: UpdateActivity!): Activity!
+	deleteActivity(id: ID!): Boolean!
+	createRole(input: NewRole!): Role!
+	updateRole(id: ID!, input: UpdateRole!): Role!
+	deleteRole(id: ID!): Boolean!
+	createExpense(input: NewExpense!): Expense!
+	updateExpense(id: ID!, input: UpdateExpense!): Expense!
+	deleteExpense(id: ID!): Boolean!
 }

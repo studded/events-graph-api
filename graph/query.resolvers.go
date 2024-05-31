@@ -15,9 +15,14 @@ func (r *queryResolver) Events(ctx context.Context, limit *int, offset *int) ([]
 	return r.EventsRepo.GetEvents(limit, offset)
 }
 
+// Event is the resolver for the event field.
+func (r *queryResolver) Event(ctx context.Context, id int) (*model.Event, error) {
+	return r.EventsRepo.GetEventByID(id)
+}
+
 // Users is the resolver for the users field.
-func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
-	return r.UsersRepo.GetUsers()
+func (r *queryResolver) Users(ctx context.Context, limit *int, offset *int) ([]*model.User, error) {
+	return r.UsersRepo.GetUsers(limit, offset)
 }
 
 // User is the resolver for the user field.

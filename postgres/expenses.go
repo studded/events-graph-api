@@ -78,8 +78,9 @@ func (e *ExpensesRepo) DeleteExpense(expense *model.Expense) error {
 }
 
 func (e *ExpensesRepo) GetExpensesTotalByEventID(eventId int) (float64, error) {
-	// SELECT SUM(cost) FROM expenses WHERE event_id={eventId}
-	query, _, _ := goqu.Select(goqu.SUM("cost")).From("expenses").Where(goqu.C("event_id").Eq(eventId)).ToSQL()
+	// SELECT COALESCE(SUM(cost), 0) FROM expenses WHERE event_id={eventId}
+	query, _, _ := goqu.Select(goqu.COALESCE(goqu.SUM("cost"), 0)).
+		From("expenses").Where(goqu.C("event_id").Eq(eventId)).ToSQL()
 	fmt.Println(query)
 
 	var total float64
@@ -93,8 +94,8 @@ func (e *ExpensesRepo) GetExpensesTotalByEventID(eventId int) (float64, error) {
 
 func (e *ExpensesRepo) GetExpenseCategoriesByEventID(eventId int) ([]*model.ExpenseCategory, error) {
 	// SELECT category, SUM(cost) as total FROM expenses WHERE event_id={event_id} GROUP BY category
-	query, _, _ := goqu.Select("category", goqu.SUM("cost").As("total")).From("expenses").
-		Where(goqu.C("event_id").Eq(eventId)).GroupBy("category").ToSQL()
+	query, _, _ := goqu.Select("category", goqu.COUNT("*"), goqu.SUM("cost").As("total")).
+		From("expenses").Where(goqu.C("event_id").Eq(eventId)).GroupBy("category").ToSQL()
 	fmt.Println(query)
 
 	var expenseCategories []*model.ExpenseCategory

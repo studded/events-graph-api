@@ -6,8 +6,10 @@ package graph
 
 import (
 	"context"
+	"errors"
 
 	"github.com/studded/events-graph-api/graph/model"
+	"github.com/studded/events-graph-api/middleware"
 )
 
 // Activities is the resolver for the activities field.
@@ -22,16 +24,52 @@ func (r *eventResolver) Roles(ctx context.Context, obj *model.Event) ([]*model.R
 
 // Expenses is the resolver for the expenses field.
 func (r *eventResolver) Expenses(ctx context.Context, obj *model.Event) ([]*model.Expense, error) {
+	currentUser, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if err != nil {
+		return nil, errors.New("must be logged in to view expenses")
+	}
+
+	role, err := r.RolesRepo.GetRoleByEventIDAndUserID(obj.ID, currentUser.ID)
+
+	if err != nil || role.Type != "admin" && role.Type != "contributor" {
+		return nil, errors.New("only admins and contributors may view expenses")
+	}
+
 	return r.ExpensesRepo.GetExpensesByEventID(obj.ID)
 }
 
 // ExpenseTotal is the resolver for the expenseTotal field.
 func (r *eventResolver) ExpenseTotal(ctx context.Context, obj *model.Event) (float64, error) {
+	currentUser, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if err != nil {
+		return 0, errors.New("must be logged in to view expense total")
+	}
+
+	role, err := r.RolesRepo.GetRoleByEventIDAndUserID(obj.ID, currentUser.ID)
+
+	if err != nil || role.Type != "admin" && role.Type != "contributor" {
+		return 0, errors.New("only admins and contributors may view expense totals")
+	}
+
 	return r.ExpensesRepo.GetExpensesTotalByEventID(obj.ID)
 }
 
 // ExpenseCategories is the resolver for the expenseCategories field.
 func (r *eventResolver) ExpenseCategories(ctx context.Context, obj *model.Event) ([]*model.ExpenseCategory, error) {
+	currentUser, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if err != nil {
+		return nil, errors.New("must be logged in to view expense categories")
+	}
+
+	role, err := r.RolesRepo.GetRoleByEventIDAndUserID(obj.ID, currentUser.ID)
+
+	if err != nil || role.Type != "admin" && role.Type != "contributor" {
+		return nil, errors.New("only admins and contributors may view expense categories")
+	}
+
 	return r.ExpensesRepo.GetExpenseCategoriesByEventID(obj.ID)
 }
 

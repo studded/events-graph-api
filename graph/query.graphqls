@@ -1,5 +1,6 @@
 type Query {
 	events(limit: Int = 10, offset: Int = 0): [Event!]!
-  users: [User!]!
+	event(id: ID!): Event!
+  users(limit: Int = 10, offset: Int = 0): [User!]!
 	user(email: String!): User!
 }

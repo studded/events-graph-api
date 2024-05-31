@@ -86,29 +86,31 @@ type ComplexityRoot struct {
 
 	ExpenseCategory struct {
 		Category func(childComplexity int) int
+		Count    func(childComplexity int) int
 		Total    func(childComplexity int) int
 	}
 
 	Mutation struct {
-		CreateActivity func(childComplexity int, input model.NewActivity, currentUserID int) int
-		CreateEvent    func(childComplexity int, input model.NewEvent, currentUserID int) int
-		CreateExpense  func(childComplexity int, input model.NewExpense, currentUserID int) int
-		CreateRole     func(childComplexity int, input model.NewRole, currentUserID int) int
+		CreateActivity func(childComplexity int, input model.NewActivity) int
+		CreateEvent    func(childComplexity int, input model.NewEvent) int
+		CreateExpense  func(childComplexity int, input model.NewExpense) int
+		CreateRole     func(childComplexity int, input model.NewRole) int
 		CreateUser     func(childComplexity int, input model.NewUser) int
-		DeleteActivity func(childComplexity int, id int, currentUserID int) int
-		DeleteEvent    func(childComplexity int, id int, currentUserID int) int
-		DeleteExpense  func(childComplexity int, id int, currentUserID int) int
-		DeleteRole     func(childComplexity int, id int, currentUserID int) int
-		UpdateActivity func(childComplexity int, id int, input model.UpdateActivity, currentUserID int) int
-		UpdateEvent    func(childComplexity int, id int, input model.UpdateEvent, currentUserID int) int
-		UpdateExpense  func(childComplexity int, id int, input model.UpdateExpense, currentUserID int) int
-		UpdateRole     func(childComplexity int, id int, input model.UpdateRole, currentUserID int) int
+		DeleteActivity func(childComplexity int, id int) int
+		DeleteEvent    func(childComplexity int, id int) int
+		DeleteExpense  func(childComplexity int, id int) int
+		DeleteRole     func(childComplexity int, id int) int
+		UpdateActivity func(childComplexity int, id int, input model.UpdateActivity) int
+		UpdateEvent    func(childComplexity int, id int, input model.UpdateEvent) int
+		UpdateExpense  func(childComplexity int, id int, input model.UpdateExpense) int
+		UpdateRole     func(childComplexity int, id int, input model.UpdateRole) int
 	}
 
 	Query struct {
+		Event  func(childComplexity int, id int) int
 		Events func(childComplexity int, limit *int, offset *int) int
 		User   func(childComplexity int, email string) int
-		Users  func(childComplexity int) int
+		Users  func(childComplexity int, limit *int, offset *int) int
 	}
 
 	Role struct {
@@ -142,22 +144,23 @@ type ExpenseResolver interface {
 }
 type MutationResolver interface {
 	CreateUser(ctx context.Context, input model.NewUser) (*model.User, error)
-	CreateEvent(ctx context.Context, input model.NewEvent, currentUserID int) (*model.Event, error)
-	UpdateEvent(ctx context.Context, id int, input model.UpdateEvent, currentUserID int) (*model.Event, error)
-	DeleteEvent(ctx context.Context, id int, currentUserID int) (bool, error)
-	CreateActivity(ctx context.Context, input model.NewActivity, currentUserID int) (*model.Activity, error)
-	UpdateActivity(ctx context.Context, id int, input model.UpdateActivity, currentUserID int) (*model.Activity, error)
-	DeleteActivity(ctx context.Context, id int, currentUserID int) (bool, error)
-	CreateRole(ctx context.Context, input model.NewRole, currentUserID int) (*model.Role, error)
-	UpdateRole(ctx context.Context, id int, input model.UpdateRole, currentUserID int) (*model.Role, error)
-	DeleteRole(ctx context.Context, id int, currentUserID int) (bool, error)
-	CreateExpense(ctx context.Context, input model.NewExpense, currentUserID int) (*model.Expense, error)
-	UpdateExpense(ctx context.Context, id int, input model.UpdateExpense, currentUserID int) (*model.Expense, error)
-	DeleteExpense(ctx context.Context, id int, currentUserID int) (bool, error)
+	CreateEvent(ctx context.Context, input model.NewEvent) (*model.Event, error)
+	UpdateEvent(ctx context.Context, id int, input model.UpdateEvent) (*model.Event, error)
+	DeleteEvent(ctx context.Context, id int) (bool, error)
+	CreateActivity(ctx context.Context, input model.NewActivity) (*model.Activity, error)
+	UpdateActivity(ctx context.Context, id int, input model.UpdateActivity) (*model.Activity, error)
+	DeleteActivity(ctx context.Context, id int) (bool, error)
+	CreateRole(ctx context.Context, input model.NewRole) (*model.Role, error)
+	UpdateRole(ctx context.Context, id int, input model.UpdateRole) (*model.Role, error)
+	DeleteRole(ctx context.Context, id int) (bool, error)
+	CreateExpense(ctx context.Context, input model.NewExpense) (*model.Expense, error)
+	UpdateExpense(ctx context.Context, id int, input model.UpdateExpense) (*model.Expense, error)
+	DeleteExpense(ctx context.Context, id int) (bool, error)
 }
 type QueryResolver interface {
 	Events(ctx context.Context, limit *int, offset *int) ([]*model.Event, error)
-	Users(ctx context.Context) ([]*model.User, error)
+	Event(ctx context.Context, id int) (*model.Event, error)
+	Users(ctx context.Context, limit *int, offset *int) ([]*model.User, error)
 	User(ctx context.Context, email string) (*model.User, error)
 }
 type RoleResolver interface {
@@ -355,6 +358,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ExpenseCategory.Category(childComplexity), true
 
+	case "ExpenseCategory.count":
+		if e.complexity.ExpenseCategory.Count == nil {
+			break
+		}
+
+		return e.complexity.ExpenseCategory.Count(childComplexity), true
+
 	case "ExpenseCategory.total":
 		if e.complexity.ExpenseCategory.Total == nil {
 			break
@@ -372,7 +382,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateActivity(childComplexity, args["input"].(model.NewActivity), args["currentUserId"].(int)), true
+		return e.complexity.Mutation.CreateActivity(childComplexity, args["input"].(model.NewActivity)), true
 
 	case "Mutation.createEvent":
 		if e.complexity.Mutation.CreateEvent == nil {
@@ -384,7 +394,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateEvent(childComplexity, args["input"].(model.NewEvent), args["currentUserId"].(int)), true
+		return e.complexity.Mutation.CreateEvent(childComplexity, args["input"].(model.NewEvent)), true
 
 	case "Mutation.createExpense":
 		if e.complexity.Mutation.CreateExpense == nil {
@@ -396,7 +406,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateExpense(childComplexity, args["input"].(model.NewExpense), args["currentUserId"].(int)), true
+		return e.complexity.Mutation.CreateExpense(childComplexity, args["input"].(model.NewExpense)), true
 
 	case "Mutation.createRole":
 		if e.complexity.Mutation.CreateRole == nil {
@@ -408,7 +418,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateRole(childComplexity, args["input"].(model.NewRole), args["currentUserId"].(int)), true
+		return e.complexity.Mutation.CreateRole(childComplexity, args["input"].(model.NewRole)), true
 
 	case "Mutation.createUser":
 		if e.complexity.Mutation.CreateUser == nil {
@@ -432,7 +442,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteActivity(childComplexity, args["id"].(int), args["currentUserId"].(int)), true
+		return e.complexity.Mutation.DeleteActivity(childComplexity, args["id"].(int)), true
 
 	case "Mutation.deleteEvent":
 		if e.complexity.Mutation.DeleteEvent == nil {
@@ -444,7 +454,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteEvent(childComplexity, args["id"].(int), args["currentUserId"].(int)), true
+		return e.complexity.Mutation.DeleteEvent(childComplexity, args["id"].(int)), true
 
 	case "Mutation.deleteExpense":
 		if e.complexity.Mutation.DeleteExpense == nil {
@@ -456,7 +466,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteExpense(childComplexity, args["id"].(int), args["currentUserId"].(int)), true
+		return e.complexity.Mutation.DeleteExpense(childComplexity, args["id"].(int)), true
 
 	case "Mutation.deleteRole":
 		if e.complexity.Mutation.DeleteRole == nil {
@@ -468,7 +478,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteRole(childComplexity, args["id"].(int), args["currentUserId"].(int)), true
+		return e.complexity.Mutation.DeleteRole(childComplexity, args["id"].(int)), true
 
 	case "Mutation.updateActivity":
 		if e.complexity.Mutation.UpdateActivity == nil {
@@ -480,7 +490,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateActivity(childComplexity, args["id"].(int), args["input"].(model.UpdateActivity), args["currentUserId"].(int)), true
+		return e.complexity.Mutation.UpdateActivity(childComplexity, args["id"].(int), args["input"].(model.UpdateActivity)), true
 
 	case "Mutation.updateEvent":
 		if e.complexity.Mutation.UpdateEvent == nil {
@@ -492,7 +502,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateEvent(childComplexity, args["id"].(int), args["input"].(model.UpdateEvent), args["currentUserId"].(int)), true
+		return e.complexity.Mutation.UpdateEvent(childComplexity, args["id"].(int), args["input"].(model.UpdateEvent)), true
 
 	case "Mutation.updateExpense":
 		if e.complexity.Mutation.UpdateExpense == nil {
@@ -504,7 +514,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateExpense(childComplexity, args["id"].(int), args["input"].(model.UpdateExpense), args["currentUserId"].(int)), true
+		return e.complexity.Mutation.UpdateExpense(childComplexity, args["id"].(int), args["input"].(model.UpdateExpense)), true
 
 	case "Mutation.updateRole":
 		if e.complexity.Mutation.UpdateRole == nil {
@@ -516,7 +526,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateRole(childComplexity, args["id"].(int), args["input"].(model.UpdateRole), args["currentUserId"].(int)), true
+		return e.complexity.Mutation.UpdateRole(childComplexity, args["id"].(int), args["input"].(model.UpdateRole)), true
+
+	case "Query.event":
+		if e.complexity.Query.Event == nil {
+			break
+		}
+
+		args, err := ec.field_Query_event_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Event(childComplexity, args["id"].(int)), true
 
 	case "Query.events":
 		if e.complexity.Query.Events == nil {
@@ -547,7 +569,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.Users(childComplexity), true
+		args, err := ec.field_Query_users_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Users(childComplexity, args["limit"].(*int), args["offset"].(*int)), true
 
 	case "Role.event":
 		if e.complexity.Role.Event == nil {
@@ -763,15 +790,6 @@ func (ec *executionContext) field_Mutation_createActivity_args(ctx context.Conte
 		}
 	}
 	args["input"] = arg0
-	var arg1 int
-	if tmp, ok := rawArgs["currentUserId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currentUserId"))
-		arg1, err = ec.unmarshalNID2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["currentUserId"] = arg1
 	return args, nil
 }
 
@@ -787,15 +805,6 @@ func (ec *executionContext) field_Mutation_createEvent_args(ctx context.Context,
 		}
 	}
 	args["input"] = arg0
-	var arg1 int
-	if tmp, ok := rawArgs["currentUserId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currentUserId"))
-		arg1, err = ec.unmarshalNID2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["currentUserId"] = arg1
 	return args, nil
 }
 
@@ -811,15 +820,6 @@ func (ec *executionContext) field_Mutation_createExpense_args(ctx context.Contex
 		}
 	}
 	args["input"] = arg0
-	var arg1 int
-	if tmp, ok := rawArgs["currentUserId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currentUserId"))
-		arg1, err = ec.unmarshalNID2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["currentUserId"] = arg1
 	return args, nil
 }
 
@@ -835,15 +835,6 @@ func (ec *executionContext) field_Mutation_createRole_args(ctx context.Context, 
 		}
 	}
 	args["input"] = arg0
-	var arg1 int
-	if tmp, ok := rawArgs["currentUserId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currentUserId"))
-		arg1, err = ec.unmarshalNID2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["currentUserId"] = arg1
 	return args, nil
 }
 
@@ -874,15 +865,6 @@ func (ec *executionContext) field_Mutation_deleteActivity_args(ctx context.Conte
 		}
 	}
 	args["id"] = arg0
-	var arg1 int
-	if tmp, ok := rawArgs["currentUserId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currentUserId"))
-		arg1, err = ec.unmarshalNID2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["currentUserId"] = arg1
 	return args, nil
 }
 
@@ -898,15 +880,6 @@ func (ec *executionContext) field_Mutation_deleteEvent_args(ctx context.Context,
 		}
 	}
 	args["id"] = arg0
-	var arg1 int
-	if tmp, ok := rawArgs["currentUserId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currentUserId"))
-		arg1, err = ec.unmarshalNID2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["currentUserId"] = arg1
 	return args, nil
 }
 
@@ -922,15 +895,6 @@ func (ec *executionContext) field_Mutation_deleteExpense_args(ctx context.Contex
 		}
 	}
 	args["id"] = arg0
-	var arg1 int
-	if tmp, ok := rawArgs["currentUserId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currentUserId"))
-		arg1, err = ec.unmarshalNID2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["currentUserId"] = arg1
 	return args, nil
 }
 
@@ -946,15 +910,6 @@ func (ec *executionContext) field_Mutation_deleteRole_args(ctx context.Context, 
 		}
 	}
 	args["id"] = arg0
-	var arg1 int
-	if tmp, ok := rawArgs["currentUserId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currentUserId"))
-		arg1, err = ec.unmarshalNID2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["currentUserId"] = arg1
 	return args, nil
 }
 
@@ -979,15 +934,6 @@ func (ec *executionContext) field_Mutation_updateActivity_args(ctx context.Conte
 		}
 	}
 	args["input"] = arg1
-	var arg2 int
-	if tmp, ok := rawArgs["currentUserId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currentUserId"))
-		arg2, err = ec.unmarshalNID2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["currentUserId"] = arg2
 	return args, nil
 }
 
@@ -1012,15 +958,6 @@ func (ec *executionContext) field_Mutation_updateEvent_args(ctx context.Context,
 		}
 	}
 	args["input"] = arg1
-	var arg2 int
-	if tmp, ok := rawArgs["currentUserId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currentUserId"))
-		arg2, err = ec.unmarshalNID2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["currentUserId"] = arg2
 	return args, nil
 }
 
@@ -1045,15 +982,6 @@ func (ec *executionContext) field_Mutation_updateExpense_args(ctx context.Contex
 		}
 	}
 	args["input"] = arg1
-	var arg2 int
-	if tmp, ok := rawArgs["currentUserId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currentUserId"))
-		arg2, err = ec.unmarshalNID2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["currentUserId"] = arg2
 	return args, nil
 }
 
@@ -1078,15 +1006,6 @@ func (ec *executionContext) field_Mutation_updateRole_args(ctx context.Context, 
 		}
 	}
 	args["input"] = arg1
-	var arg2 int
-	if tmp, ok := rawArgs["currentUserId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currentUserId"))
-		arg2, err = ec.unmarshalNID2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["currentUserId"] = arg2
 	return args, nil
 }
 
@@ -1102,6 +1021,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_event_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -1141,6 +1075,30 @@ func (ec *executionContext) field_Query_user_args(ctx context.Context, rawArgs m
 		}
 	}
 	args["email"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_users_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["limit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["limit"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["offset"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["offset"] = arg1
 	return args, nil
 }
 
@@ -1989,6 +1947,8 @@ func (ec *executionContext) fieldContext_Event_expenseCategories(_ context.Conte
 			switch field.Name {
 			case "category":
 				return ec.fieldContext_ExpenseCategory_category(ctx, field)
+			case "count":
+				return ec.fieldContext_ExpenseCategory_count(ctx, field)
 			case "total":
 				return ec.fieldContext_ExpenseCategory_total(ctx, field)
 			}
@@ -2330,6 +2290,50 @@ func (ec *executionContext) fieldContext_ExpenseCategory_category(_ context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _ExpenseCategory_count(ctx context.Context, field graphql.CollectedField, obj *model.ExpenseCategory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ExpenseCategory_count(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Count, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ExpenseCategory_count(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExpenseCategory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ExpenseCategory_total(ctx context.Context, field graphql.CollectedField, obj *model.ExpenseCategory) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ExpenseCategory_total(ctx, field)
 	if err != nil {
@@ -2455,7 +2459,7 @@ func (ec *executionContext) _Mutation_createEvent(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateEvent(rctx, fc.Args["input"].(model.NewEvent), fc.Args["currentUserId"].(int))
+		return ec.resolvers.Mutation().CreateEvent(rctx, fc.Args["input"].(model.NewEvent))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2534,7 +2538,7 @@ func (ec *executionContext) _Mutation_updateEvent(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateEvent(rctx, fc.Args["id"].(int), fc.Args["input"].(model.UpdateEvent), fc.Args["currentUserId"].(int))
+		return ec.resolvers.Mutation().UpdateEvent(rctx, fc.Args["id"].(int), fc.Args["input"].(model.UpdateEvent))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2613,7 +2617,7 @@ func (ec *executionContext) _Mutation_deleteEvent(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteEvent(rctx, fc.Args["id"].(int), fc.Args["currentUserId"].(int))
+		return ec.resolvers.Mutation().DeleteEvent(rctx, fc.Args["id"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2668,7 +2672,7 @@ func (ec *executionContext) _Mutation_createActivity(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateActivity(rctx, fc.Args["input"].(model.NewActivity), fc.Args["currentUserId"].(int))
+		return ec.resolvers.Mutation().CreateActivity(rctx, fc.Args["input"].(model.NewActivity))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2737,7 +2741,7 @@ func (ec *executionContext) _Mutation_updateActivity(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateActivity(rctx, fc.Args["id"].(int), fc.Args["input"].(model.UpdateActivity), fc.Args["currentUserId"].(int))
+		return ec.resolvers.Mutation().UpdateActivity(rctx, fc.Args["id"].(int), fc.Args["input"].(model.UpdateActivity))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2806,7 +2810,7 @@ func (ec *executionContext) _Mutation_deleteActivity(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteActivity(rctx, fc.Args["id"].(int), fc.Args["currentUserId"].(int))
+		return ec.resolvers.Mutation().DeleteActivity(rctx, fc.Args["id"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2861,7 +2865,7 @@ func (ec *executionContext) _Mutation_createRole(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateRole(rctx, fc.Args["input"].(model.NewRole), fc.Args["currentUserId"].(int))
+		return ec.resolvers.Mutation().CreateRole(rctx, fc.Args["input"].(model.NewRole))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2926,7 +2930,7 @@ func (ec *executionContext) _Mutation_updateRole(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateRole(rctx, fc.Args["id"].(int), fc.Args["input"].(model.UpdateRole), fc.Args["currentUserId"].(int))
+		return ec.resolvers.Mutation().UpdateRole(rctx, fc.Args["id"].(int), fc.Args["input"].(model.UpdateRole))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2991,7 +2995,7 @@ func (ec *executionContext) _Mutation_deleteRole(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteRole(rctx, fc.Args["id"].(int), fc.Args["currentUserId"].(int))
+		return ec.resolvers.Mutation().DeleteRole(rctx, fc.Args["id"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3046,7 +3050,7 @@ func (ec *executionContext) _Mutation_createExpense(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateExpense(rctx, fc.Args["input"].(model.NewExpense), fc.Args["currentUserId"].(int))
+		return ec.resolvers.Mutation().CreateExpense(rctx, fc.Args["input"].(model.NewExpense))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3115,7 +3119,7 @@ func (ec *executionContext) _Mutation_updateExpense(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateExpense(rctx, fc.Args["id"].(int), fc.Args["input"].(model.UpdateExpense), fc.Args["currentUserId"].(int))
+		return ec.resolvers.Mutation().UpdateExpense(rctx, fc.Args["id"].(int), fc.Args["input"].(model.UpdateExpense))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3184,7 +3188,7 @@ func (ec *executionContext) _Mutation_deleteExpense(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteExpense(rctx, fc.Args["id"].(int), fc.Args["currentUserId"].(int))
+		return ec.resolvers.Mutation().DeleteExpense(rctx, fc.Args["id"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3304,6 +3308,85 @@ func (ec *executionContext) fieldContext_Query_events(ctx context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_event(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_event(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Event(rctx, fc.Args["id"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Event)
+	fc.Result = res
+	return ec.marshalNEvent2ᚖgithubᚗcomᚋstuddedᚋeventsᚑgraphᚑapiᚋgraphᚋmodelᚐEvent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_event(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Event_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Event_name(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Event_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Event_endDate(ctx, field)
+			case "location":
+				return ec.fieldContext_Event_location(ctx, field)
+			case "description":
+				return ec.fieldContext_Event_description(ctx, field)
+			case "activities":
+				return ec.fieldContext_Event_activities(ctx, field)
+			case "roles":
+				return ec.fieldContext_Event_roles(ctx, field)
+			case "expenses":
+				return ec.fieldContext_Event_expenses(ctx, field)
+			case "expenseTotal":
+				return ec.fieldContext_Event_expenseTotal(ctx, field)
+			case "expenseCategories":
+				return ec.fieldContext_Event_expenseCategories(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_event_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_users(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_users(ctx, field)
 	if err != nil {
@@ -3318,7 +3401,7 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Users(rctx)
+		return ec.resolvers.Query().Users(rctx, fc.Args["limit"].(*int), fc.Args["offset"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3335,7 +3418,7 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋstuddedᚋeventsᚑgraphᚑapiᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_users(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_users(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -3356,6 +3439,17 @@ func (ec *executionContext) fieldContext_Query_users(_ context.Context, field gr
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_users_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -6654,6 +6748,11 @@ func (ec *executionContext) _ExpenseCategory(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "count":
+			out.Values[i] = ec._ExpenseCategory_count(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "total":
 			out.Values[i] = ec._ExpenseCategory_total(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -6844,6 +6943,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_events(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "event":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_event(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -7728,6 +7849,21 @@ func (ec *executionContext) unmarshalNID2int(ctx context.Context, v interface{})
 
 func (ec *executionContext) marshalNID2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
 	res := graphql.MarshalIntID(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")

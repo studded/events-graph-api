@@ -14,7 +14,7 @@ type EventsRepo struct {
 }
 
 func (e *EventsRepo) GetEvents(limit, offset *int) ([]*model.Event, error) {
-	// SELECT * FROM events
+	// SELECT * FROM events LIMIT {limit} OFFSET {offset}
 	query, _, _ := goqu.From("events").Limit(uint(*limit)).Offset(uint(*offset)).ToSQL()
 	fmt.Println(query)
 
@@ -68,11 +68,27 @@ func (e *EventsRepo) UpdateEvent(event *model.Event) (*model.Event, error) {
 }
 
 func (e *EventsRepo) DeleteEvent(event *model.Event) error {
+	tx := e.DB.MustBegin()
+
 	// DELETE FROM events WHERE id={id}
 	query, _, _ := goqu.Delete("events").Where(goqu.C("id").Eq(event.ID)).ToSQL()
 	fmt.Println(query)
+	tx.MustExec(query)
 
-	_, err := e.DB.Exec(query)
+	// DELETE FROM activities WHERE event_id={event.id}
+	query, _, _ = goqu.Delete("activities").Where(goqu.C("event_id").Eq(event.ID)).ToSQL()
+	fmt.Println(query)
+	tx.MustExec(query)
 
-	return err
+	// DELETE FROM roles WHERE event_id={event.id}
+	query, _, _ = goqu.Delete("roles").Where(goqu.C("event_id").Eq(event.ID)).ToSQL()
+	fmt.Println(query)
+	tx.MustExec(query)
+
+	// DELETE FROM expenses WHERE event_id={event.id}
+	query, _, _ = goqu.Delete("expenses").Where(goqu.C("event_id").Eq(event.ID)).ToSQL()
+	fmt.Println(query)
+	tx.MustExec(query)
+
+	return tx.Commit()
 }

@@ -24,5 +24,6 @@ input UpdateExpense {
 
 type ExpenseCategory {
 	category: String!
+	count: Int!
 	total: Float!
 }

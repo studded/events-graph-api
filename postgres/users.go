@@ -13,9 +13,9 @@ type UsersRepo struct {
 	DB *sqlx.DB
 }
 
-func (e *UsersRepo) GetUsers() ([]*model.User, error) {
-	// SELECT * FROM users
-	query, _, _ := goqu.From("users").ToSQL()
+func (e *UsersRepo) GetUsers(limit, offset *int) ([]*model.User, error) {
+	// SELECT * FROM users LIMIT {limit} OFFSET {offset}
+	query, _, _ := goqu.From("users").Limit(uint(*limit)).Offset(uint(*offset)).ToSQL()
 	fmt.Println(query)
 
 	var users []*model.User

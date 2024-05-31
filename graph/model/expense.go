@@ -27,5 +27,6 @@ type UpdateExpense struct {
 
 type ExpenseCategory struct {
 	Category string
+	Count    int
 	Total    float64
 }
