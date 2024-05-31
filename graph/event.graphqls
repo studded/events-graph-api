@@ -8,6 +8,8 @@ type Event {
   activities: [Activity!]!
 	roles: [Role!]!
 	expenses: [Expense!]!
+	expenseTotal: Float!
+	expenseCategories: [ExpenseCategory!]!
 }
 
 input NewEvent {

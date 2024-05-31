@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/studded/events-graph-api/graph/model"
 )
@@ -270,17 +269,81 @@ func (r *mutationResolver) DeleteRole(ctx context.Context, id int, currentUserID
 
 // CreateExpense is the resolver for the createExpense field.
 func (r *mutationResolver) CreateExpense(ctx context.Context, input model.NewExpense, currentUserID int) (*model.Expense, error) {
-	panic(fmt.Errorf("not implemented: CreateExpense - createExpense"))
+	// Check the current user has an admin role for the event
+	role, err := r.RolesRepo.GetRoleByEventIDAndUserID(input.EventID, currentUserID)
+	if err != nil || role.Type != "admin" && role.Type != "contributor" {
+		return nil, errors.New("only admins may create expenses")
+	}
+
+	// Check event exists
+	event, err := r.EventsRepo.GetEventByID(input.EventID)
+	if err != nil {
+		return nil, errors.New("event does not exist")
+	}
+
+	expense := &model.Expense{
+		EventID:     event.ID,
+		Name:        input.Name,
+		Cost:        input.Cost,
+		Description: input.Description,
+		Category:    input.Category,
+	}
+
+	return r.ExpensesRepo.CreateExpense(expense)
 }
 
 // UpdateExpense is the resolver for the updateExpense field.
 func (r *mutationResolver) UpdateExpense(ctx context.Context, id int, input model.UpdateExpense, currentUserID int) (*model.Expense, error) {
-	panic(fmt.Errorf("not implemented: UpdateExpense - updateExpense"))
+	expense, err := r.ExpensesRepo.GetExpenseByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check the current user has an admin role for the event
+	role, err := r.RolesRepo.GetRoleByEventIDAndUserID(expense.EventID, currentUserID)
+	if err != nil || role.Type != "admin" {
+		return nil, errors.New("only admins may update expenses")
+	}
+
+	if input.Name != nil {
+		expense.Name = *input.Name
+	}
+
+	if input.Cost != nil {
+		expense.Cost = *input.Cost
+	}
+
+	if input.Description != nil {
+		expense.Description = *input.Description
+	}
+
+	if input.Category != nil {
+		expense.Category = *input.Category
+	}
+
+	return r.ExpensesRepo.UpdateExpense(expense)
 }
 
 // DeleteExpense is the resolver for the deleteExpense field.
 func (r *mutationResolver) DeleteExpense(ctx context.Context, id int, currentUserID int) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteExpense - deleteExpense"))
+	expense, err := r.ExpensesRepo.GetExpenseByID(id)
+	if err != nil {
+		return false, err
+	}
+
+	// Check the current user has an admin role for the event
+	role, err := r.RolesRepo.GetRoleByEventIDAndUserID(expense.EventID, currentUserID)
+	if err != nil || role.Type != "admin" {
+		return false, errors.New("only admins may delete expenses")
+	}
+
+	err = r.ExpensesRepo.DeleteExpense(expense)
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // Mutation returns MutationResolver implementation.

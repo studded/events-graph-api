@@ -25,6 +25,16 @@ func (r *eventResolver) Expenses(ctx context.Context, obj *model.Event) ([]*mode
 	return r.ExpensesRepo.GetExpensesByEventID(obj.ID)
 }
 
+// ExpenseTotal is the resolver for the expenseTotal field.
+func (r *eventResolver) ExpenseTotal(ctx context.Context, obj *model.Event) (float64, error) {
+	return r.ExpensesRepo.GetExpensesTotalByEventID(obj.ID)
+}
+
+// ExpenseCategories is the resolver for the expenseCategories field.
+func (r *eventResolver) ExpenseCategories(ctx context.Context, obj *model.Event) ([]*model.ExpenseCategory, error) {
+	return r.ExpensesRepo.GetExpenseCategoriesByEventID(obj.ID)
+}
+
 // Event returns EventResolver implementation.
 func (r *Resolver) Event() EventResolver { return &eventResolver{r} }
 

@@ -1,3 +1,4 @@
 # TODO:
 - Fix N+1 queries (Dataloader)
-- Add pagination
+- Add more pagination
+- Cascade deletion (no orphans)

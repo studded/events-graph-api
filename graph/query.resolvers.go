@@ -11,8 +11,8 @@ import (
 )
 
 // Events is the resolver for the events field.
-func (r *queryResolver) Events(ctx context.Context) ([]*model.Event, error) {
-	return r.EventsRepo.GetEvents()
+func (r *queryResolver) Events(ctx context.Context, limit *int, offset *int) ([]*model.Event, error) {
+	return r.EventsRepo.GetEvents(limit, offset)
 }
 
 // Users is the resolver for the users field.

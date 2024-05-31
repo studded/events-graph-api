@@ -21,3 +21,8 @@ input UpdateExpense {
 	description: String
 	category: String
 }
+
+type ExpenseCategory {
+	category: String!
+	total: Float!
+}

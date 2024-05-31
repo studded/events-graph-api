@@ -13,9 +13,9 @@ type EventsRepo struct {
 	DB *sqlx.DB
 }
 
-func (e *EventsRepo) GetEvents() ([]*model.Event, error) {
+func (e *EventsRepo) GetEvents(limit, offset *int) ([]*model.Event, error) {
 	// SELECT * FROM events
-	query, _, _ := goqu.From("events").ToSQL()
+	query, _, _ := goqu.From("events").Limit(uint(*limit)).Offset(uint(*offset)).ToSQL()
 	fmt.Println(query)
 
 	var events []*model.Event

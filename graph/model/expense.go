@@ -24,3 +24,8 @@ type UpdateExpense struct {
 	Description *string
 	Category    *string
 }
+
+type ExpenseCategory struct {
+	Category string
+	Total    float64
+}
