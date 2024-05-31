@@ -37,6 +37,7 @@ func main() {
 
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
+	// just assign user for checking permissions (auth would go here)
 	router.Use(customMiddleware.AssignCurrentUser(userRepo))
 
 	config := graph.Config{Resolvers: &graph.Resolver{
